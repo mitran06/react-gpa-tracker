@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform
@@ -14,6 +13,8 @@ import {
 import { Feather } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { TemplateService } from '../services/TemplateService'
+import { useErrorHandler, validateTemplateName, validateTemplateDescription } from '../hooks/useErrorHandler'
+import ErrorModal from '../components/modals/ErrorModal'
 import type { Theme, Semester, TemplateStructure } from '../types'
 
 interface TemplateSubmissionScreenProps {
@@ -28,37 +29,54 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
   currentSemesters,
   onSubmitSuccess,
   onBack
-}) => {
-  const [templateName, setTemplateName] = useState('')
+}) => {  const [templateName, setTemplateName] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
+
   const { user } = useAuth()
+  const { error, showError, showSuccess, hideError } = useErrorHandler()
 
   const handleSubmit = async () => {
-    if (!templateName.trim()) {
-      Alert.alert('Error', 'Please enter a template name')
+    // Validate template name
+    const nameValidation = validateTemplateName(templateName)
+    if (!nameValidation.isValid) {
+      showError('Invalid Template Name', nameValidation.message || 'Template name is invalid')
       return
     }
 
-    if (!description.trim()) {
-      Alert.alert('Error', 'Please enter a description')
+    // Validate description
+    const descValidation = validateTemplateDescription(description)
+    if (!descValidation.isValid) {
+      showError('Invalid Description', descValidation.message || 'Template description is invalid')
       return
     }
 
-    if (currentSemesters.length === 0) {
-      Alert.alert('Error', 'No semesters found to submit')
-      return
-    }
-
+    // Check if user is authenticated
     if (!user?.email) {
-      Alert.alert('Error', 'You must be logged in to submit a template')
+      showError('Authentication Required', 'You must be logged in to submit a template')
+      return
+    }
+
+    // Check if there are any semesters
+    if (currentSemesters.length === 0) {
+      showError('No Data to Submit', 'Please add at least one semester before submitting the template')
       return
     }
 
     // Check if semesters have courses
     const hasAnyCourses = currentSemesters.some(semester => semester.courses.length > 0)
     if (!hasAnyCourses) {
-      Alert.alert('Error', 'Please add some courses before submitting the template')
+      showError('Incomplete Template', 'Please add some courses to at least one semester before submitting the template')
+      return
+    }
+
+    // Check for empty semesters
+    const emptySemesters = currentSemesters.filter(semester => semester.courses.length === 0)
+    if (emptySemesters.length > 0) {
+      showError(
+        'Empty Semesters Found',
+        `${emptySemesters.length} semester(s) have no courses. Please add courses or remove empty semesters.`
+      )
       return
     }
 
@@ -81,14 +99,19 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
         user.email
       )
 
-      Alert.alert(
-        'Success',
-        'Template submitted successfully! It will be reviewed by an admin before being approved.',
-        [{ text: 'OK', onPress: onSubmitSuccess }]
+      showSuccess(
+        'Template Submitted!',
+        'Your template has been submitted successfully and will be reviewed by an admin before being approved.'
       )
+
+      // Wait a moment for user to see success message, then navigate back
+      setTimeout(() => {
+        hideError()
+        onSubmitSuccess()
+      }, 2000)
+
     } catch (error) {
-      console.error('Error submitting template:', error)
-      Alert.alert('Error', 'Failed to submit template. Please try again.')
+      showError('Submission Failed', error)
     } finally {
       setLoading(false)
     }
@@ -148,7 +171,7 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                     style={[styles.input, { color: theme.text, fontFamily: 'Inter_400Regular' }]}
                     value={templateName}
                     onChangeText={setTemplateName}
-                    placeholder="e.g., Computer Engineering Sem 1-8"
+                    placeholder="e.g., EAC Batch of 2028"
                     placeholderTextColor={theme.subtext}
                     maxLength={50}
                   />
@@ -169,7 +192,7 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                     style={[styles.textArea, { color: theme.text, fontFamily: 'Inter_400Regular' }]}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="Describe this template, what program/course it's for, what university/college, etc."
+                    placeholder="Describe this template"
                     placeholderTextColor={theme.subtext}
                     multiline
                     numberOfLines={4}
@@ -190,10 +213,10 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                     Submission Guidelines
                   </Text>
                   <Text style={[styles.infoText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
-                    • Your template will be reviewed by an admin before approval{'\n'}
-                    • Make sure course names and credits are accurate{'\n'}
+                    • Your template will be reviewed before approval{'\n'}
+                    • Make sure courses and credits are accurate{'\n'}
                     • Templates should be useful for other students{'\n'}
-                    • Grades will be cleared from submitted templates
+                    • Your grades will be cleared from submitted templates
                   </Text>
                 </View>
               </View>
@@ -226,9 +249,18 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                 )}
               </TouchableOpacity>
             </View>
-          </View>
-        </ScrollView>
+          </View>        </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Custom Error Modal */}
+      <ErrorModal
+        visible={error.visible}
+        title={error.title}
+        message={error.message}
+        type={error.type}
+        theme={theme}
+        onClose={hideError}
+      />
     </SafeAreaView>
   )
 }

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Modal, Switch, StyleSheet } from "react-native"
+import { View, Text, TouchableOpacity, Modal, Switch, StyleSheet, Linking } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import type { Theme } from "../../types"
 
@@ -108,7 +108,7 @@ const SettingsModal = ({
             <TouchableOpacity style={[styles.resetButton, { backgroundColor: theme.danger }]} onPress={resetAllData}>
               <Feather name="refresh-cw" size={20} color="#ffffff" />
               <Text style={[styles.resetButtonText, { color: "#ffffff", fontFamily: "Inter_500Medium" }]}>
-                Reset All Data
+                Choose a template
               </Text>
             </TouchableOpacity>
 
@@ -120,6 +120,27 @@ const SettingsModal = ({
               <Text style={[styles.aboutText, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
                 Developed by Mitran
               </Text>
+              
+              {/* Social Links */}
+              <View style={styles.socialLinks}>
+                <TouchableOpacity 
+                  style={[styles.socialButton, { backgroundColor: theme.primary }]}
+                  onPress={() => {
+                    Linking.openURL('https://linkedin.com/in/mitran-gokulnath')
+                  }}
+                >
+                  <Feather name="linkedin" size={20} color="#ffffff" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.socialButton, { backgroundColor: theme.text }]}
+                  onPress={() => {
+                    Linking.openURL('https://github.com/mitran06')
+                  }}
+                >
+                  <Feather name="github" size={20} color={theme.background} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -216,6 +237,25 @@ const styles = StyleSheet.create({
   aboutText: {
     fontSize: 14,
     marginBottom: 4,
+  },
+  socialLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 16,
+  },
+  socialButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
 })
 

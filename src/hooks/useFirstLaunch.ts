@@ -3,20 +3,28 @@ import { useState, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import * as SplashScreen from "expo-splash-screen"
 
-export const useFirstLaunch = () => {
+export const useFirstLaunch = (userUid?: string) => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(false)
   const [templateSelectionVisible, setTemplateSelectionVisible] = useState(false)
   const [appIsReady, setAppIsReady] = useState(false)
 
-  // check if this is the first launch
+  // check if this is the first launch for the current user
   const checkFirstLaunch = async () => {
     try {
       // keep splash screen visible during check
       await SplashScreen.preventAutoHideAsync()
-      const hasLaunched = await AsyncStorage.getItem("hasLaunched")
+      
+      if (!userUid) {
+        // No user authenticated yet
+        setAppIsReady(true)
+        return
+      }
+
+      const hasLaunchedKey = `hasLaunched_${userUid}`
+      const hasLaunched = await AsyncStorage.getItem(hasLaunchedKey)
 
       if (hasLaunched === null) {
-        // first time launching the app
+        // first time this user is using the app
         setIsFirstLaunch(true)
         setTemplateSelectionVisible(true)
       }
@@ -28,12 +36,19 @@ export const useFirstLaunch = () => {
   }
 
   useEffect(() => {
-    checkFirstLaunch()
-  }, [])
+    if (userUid) {
+      checkFirstLaunch()
+    } else {
+      setAppIsReady(true)
+    }
+  }, [userUid])
 
   const markAsLaunched = async () => {
     try {
-      await AsyncStorage.setItem("hasLaunched", "true")
+      if (userUid) {
+        const hasLaunchedKey = `hasLaunched_${userUid}`
+        await AsyncStorage.setItem(hasLaunchedKey, "true")
+      }
       setIsFirstLaunch(false)
     } catch (error) {
       console.error("Error marking as launched:", error)

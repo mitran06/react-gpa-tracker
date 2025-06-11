@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Alert,
   ScrollView,
   RefreshControl,
   Modal
@@ -13,6 +12,9 @@ import {
 import { Feather } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { TemplateService } from '../services/TemplateService'
+import { useErrorHandler } from '../hooks/useErrorHandler'
+import ErrorModal from '../components/modals/ErrorModal'
+import ConfirmationModal from '../components/modals/ConfirmationModal'
 import type { Theme, Template } from '../types'
 
 interface AdminScreenProps {
@@ -20,13 +22,28 @@ interface AdminScreenProps {
   onBack: () => void
 }
 
-const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {
-  const [pendingTemplates, setPendingTemplates] = useState<Template[]>([])
+const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const [pendingTemplates, setPendingTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [modalVisible, setModalVisible] = useState(false)
+  const [confirmationModal, setConfirmationModal] = useState<{
+    visible: boolean
+    title: string
+    message: string
+    confirmText: string
+    onConfirm: () => void
+    type: 'danger' | 'warning' | 'info'
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    confirmText: '',
+    onConfirm: () => {},
+    type: 'info'
+  })
   const { isAdmin } = useAuth()
+  const { error, showError, showSuccess, hideError } = useErrorHandler()
 
   const loadPendingTemplates = useCallback(async () => {
     try {
@@ -34,69 +51,63 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {
       setPendingTemplates(templates)
     } catch (error) {
       console.error('Error loading pending templates:', error)
-      Alert.alert('Error', 'Failed to load pending templates')
+      showError('Loading Failed', 'Failed to load pending templates. Please check your connection and try again.')
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [])
+  }, [showError])
 
   useEffect(() => {
     if (isAdmin) {
       loadPendingTemplates()
     }
   }, [isAdmin, loadPendingTemplates])
-
   const onRefresh = useCallback(() => {
     setRefreshing(true)
     loadPendingTemplates()
   }, [loadPendingTemplates])
 
   const handleApprove = async (templateId: string) => {
-    Alert.alert(
-      'Approve Template',
-      'Are you sure you want to approve this template? It will be available to all users.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve',
-          onPress: async () => {
-            try {
-              await TemplateService.approveTemplate(templateId)
-              setPendingTemplates(prev => prev.filter(t => t.id !== templateId))
-              Alert.alert('Success', 'Template approved successfully!')
-            } catch (error) {
-              console.error('Error approving template:', error)
-              Alert.alert('Error', 'Failed to approve template')
-            }
-          }
+    setConfirmationModal({
+      visible: true,
+      title: 'Approve Template',
+      message: 'Are you sure you want to approve this template? It will be available to all users.',
+      confirmText: 'Approve',
+      type: 'info',
+      onConfirm: async () => {
+        setConfirmationModal(prev => ({ ...prev, visible: false }))
+        try {
+          await TemplateService.approveTemplate(templateId)
+          setPendingTemplates(prev => prev.filter(t => t.id !== templateId))
+          showSuccess('Template Approved', 'The template has been approved and is now available to all users.')
+        } catch (error) {
+          console.error('Error approving template:', error)
+          showError('Approval Failed', 'Failed to approve the template. Please try again.')
         }
-      ]
-    )
+      }
+    })
   }
 
   const handleReject = async (templateId: string) => {
-    Alert.alert(
-      'Reject Template',
-      'Are you sure you want to reject this template? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await TemplateService.deleteTemplate(templateId)
-              setPendingTemplates(prev => prev.filter(t => t.id !== templateId))
-              Alert.alert('Success', 'Template rejected successfully!')
-            } catch (error) {
-              console.error('Error rejecting template:', error)
-              Alert.alert('Error', 'Failed to reject template')
-            }
-          }
+    setConfirmationModal({
+      visible: true,
+      title: 'Reject Template',
+      message: 'Are you sure you want to reject this template? This action cannot be undone.',
+      confirmText: 'Reject',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmationModal(prev => ({ ...prev, visible: false }))
+        try {
+          await TemplateService.deleteTemplate(templateId)
+          setPendingTemplates(prev => prev.filter(t => t.id !== templateId))
+          showSuccess('Template Rejected', 'The template has been rejected and removed from the system.')
+        } catch (error) {
+          console.error('Error rejecting template:', error)
+          showError('Rejection Failed', 'Failed to reject the template. Please try again.')
         }
-      ]
-    )
+      }
+    })
   }
 
   const viewTemplate = (template: Template) => {

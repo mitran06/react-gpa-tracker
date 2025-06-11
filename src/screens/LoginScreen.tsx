@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform
 } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
+import { useErrorHandler, isValidEmail, validatePassword } from '../hooks/useErrorHandler'
+import ErrorModal from '../components/modals/ErrorModal'
 import type { Theme } from '../types'
 
 interface LoginScreenProps {
@@ -28,21 +29,44 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
   const [showPassword, setShowPassword] = useState(false)
 
   const { login, register } = useAuth()
+  const { error, showError, hideError } = useErrorHandler()
 
   const handleSubmit = async () => {
+    // Basic validation
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields')
+      showError('Input Required', 'Please fill in all fields')
       return
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match')
+    // Email validation
+    if (!isValidEmail(email.trim())) {
+      showError('Invalid Email', 'Please enter a valid email address')
       return
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters')
-      return
+    // Password validation for registration
+    if (!isLogin) {
+      const passwordValidation = validatePassword(password)
+      if (!passwordValidation.isValid) {
+        showError('Invalid Password', passwordValidation.message || 'Password requirements not met')
+        return
+      }
+
+      if (password !== confirmPassword) {
+        showError('Password Mismatch', 'Passwords do not match')
+        return
+      }
+
+      if (!confirmPassword.trim()) {
+        showError('Confirmation Required', 'Please confirm your password')
+        return
+      }
+    } else {
+      // For login, just check minimum length
+      if (password.length < 6) {
+        showError('Invalid Password', 'Password must be at least 6 characters')
+        return
+      }
     }
 
     setLoading(true)
@@ -53,10 +77,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
         await register(email.trim(), password)
       }
     } catch (error: any) {
-      console.error('Auth error:', error)
-      Alert.alert(
-        'Error',
-        error.message || `Failed to ${isLogin ? 'sign in' : 'create account'}`
+      showError(
+        isLogin ? 'Sign In Failed' : 'Account Creation Failed',
+        error
       )
     } finally {
       setLoading(false)
@@ -194,9 +217,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </ScrollView>
+          </View>        </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Custom Error Modal */}
+      <ErrorModal
+        visible={error.visible}
+        title={error.title}
+        message={error.message}
+        type={error.type}
+        theme={theme}
+        onClose={hideError}
+      />
     </SafeAreaView>
   )
 }

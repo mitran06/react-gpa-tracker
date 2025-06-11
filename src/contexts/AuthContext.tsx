@@ -22,7 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Admin UID - hardcoded for security
-const ADMIN_UID = 'YOUR_ADMIN_UID_HERE' // Replace with actual admin UID
+const ADMIN_UID = 'wJN9veAIWGhLR86PFwSXiEkUnr22' // Your actual admin UID
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)

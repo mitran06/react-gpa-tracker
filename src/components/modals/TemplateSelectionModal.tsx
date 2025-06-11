@@ -1,48 +1,28 @@
-import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView, Alert } from "react-native"
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from "react-native"
 import { Feather } from "@expo/vector-icons"
-import { useState, useEffect } from "react"
-import { TemplateService } from "../../services/TemplateService"
-import type { Theme, Template } from "../../types"
+import type { Theme } from "../../types"
 import { useColorScheme } from "react-native"
 
 interface TemplateSelectionModalProps {
   visible: boolean
   theme: Theme
-  handleTemplateSelection: (useDefaultTemplate: boolean, firebaseTemplate?: Template) => void
+  onStartBlank: () => void
+  onBrowseCommunityTemplates: () => void
 }
 
-const TemplateSelectionModal = ({ visible, theme, handleTemplateSelection }: TemplateSelectionModalProps) => {
+const TemplateSelectionModal = ({ 
+  visible, 
+  theme, 
+  onStartBlank, 
+  onBrowseCommunityTemplates 
+}: TemplateSelectionModalProps) => {
   const colorScheme = useColorScheme()
   const darkMode = colorScheme === "dark"
-  const [approvedTemplates, setApprovedTemplates] = useState<Template[]>([])
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (visible) {
-      loadApprovedTemplates()
-    }
-  }, [visible])
-
-  const loadApprovedTemplates = async () => {
-    setLoading(true)
-    try {
-      const templates = await TemplateService.getApprovedTemplates()
-      setApprovedTemplates(templates)
-    } catch (error) {
-      console.error('Error loading approved templates:', error)
-      Alert.alert('Error', 'Failed to load community templates')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const selectFirebaseTemplate = (template: Template) => {
-    handleTemplateSelection(false, template)
-  }
 
   return (
     <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={() => {}}>
-      <View style={[styles.modalOverlay, { backgroundColor: darkMode ? "rgba(0, 0, 0, 0.9)" : "rgba(0, 0, 0, 0.7)" }]}>        <View style={[styles.welcomeModalContent, { backgroundColor: theme.card }]}>
+      <View style={[styles.modalOverlay, { backgroundColor: darkMode ? "rgba(0, 0, 0, 0.9)" : "rgba(0, 0, 0, 0.7)" }]}>
+        <View style={[styles.welcomeModalContent, { backgroundColor: theme.card }]}>
           <Text style={[styles.welcomeTitle, { color: theme.text, fontFamily: "Inter_700Bold" }]}>
             Welcome to GPA Calculator
           </Text>
@@ -50,88 +30,40 @@ const TemplateSelectionModal = ({ visible, theme, handleTemplateSelection }: Tem
             Choose how you'd like to start:
           </Text>
 
-          <ScrollView style={styles.templateScrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.templateOptions}>
-              {/* Default Template */}
-              <TouchableOpacity
-                style={[styles.templateOption, { backgroundColor: theme.background, borderColor: theme.border }]}
-                onPress={() => handleTemplateSelection(true)}
-              >
-                <View style={styles.templateIconContainer}>
-                  <Feather name="book-open" size={40} color={theme.primary} />
-                </View>
-                <Text style={[styles.templateOptionTitle, { color: theme.text, fontFamily: "Inter_500Medium" }]}>
-                  Default Template
-                </Text>
-                <Text style={[styles.templateOptionDesc, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                  Start with pre-filled semesters and courses
-                </Text>
-              </TouchableOpacity>
-
-              {/* Blank Template */}
-              <TouchableOpacity
-                style={[styles.templateOption, { backgroundColor: theme.background, borderColor: theme.border }]}
-                onPress={() => handleTemplateSelection(false)}
-              >
-                <View style={styles.templateIconContainer}>
-                  <Feather name="plus-circle" size={40} color={theme.primary} />
-                </View>
-                <Text style={[styles.templateOptionTitle, { color: theme.text, fontFamily: "Inter_500Medium" }]}>
-                  Blank Template
-                </Text>
-                <Text style={[styles.templateOptionDesc, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                  Start with an empty semester
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Community Templates Section */}
-            {approvedTemplates.length > 0 && (
-              <View style={styles.communitySection}>
-                <Text style={[styles.communitySectionTitle, { color: theme.text, fontFamily: "Inter_600SemiBold" }]}>
-                  Community Templates
-                </Text>
-                <Text style={[styles.communitySectionDesc, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                  Templates shared by other users
-                </Text>
-
-                {approvedTemplates.map((template) => (
-                  <TouchableOpacity
-                    key={template.id}
-                    style={[styles.communityTemplate, { backgroundColor: theme.background, borderColor: theme.border }]}
-                    onPress={() => selectFirebaseTemplate(template)}
-                  >
-                    <View style={styles.communityTemplateHeader}>
-                      <View style={styles.communityTemplateInfo}>
-                        <Text style={[styles.communityTemplateName, { color: theme.text, fontFamily: "Inter_500Medium" }]}>
-                          {template.name}
-                        </Text>
-                        <Text style={[styles.communityTemplateCreator, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                          by {template.createdBy}
-                        </Text>
-                      </View>
-                      <Feather name="download" size={16} color={theme.primary} />
-                    </View>
-                    <Text style={[styles.communityTemplateDesc, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                      {template.description}
-                    </Text>
-                    <Text style={[styles.communityTemplateStats, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                      {template.structure.semesters.length} semester{template.structure.semesters.length !== 1 ? 's' : ''} • {' '}
-                      {template.structure.semesters.reduce((total, sem) => total + sem.courses.length, 0)} courses
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          {/* Template Options */}
+          <View style={styles.templateOptions}>
+            {/* Community Templates */}
+            <TouchableOpacity
+              style={[styles.templateOption, { backgroundColor: theme.background, borderColor: theme.border }]}
+              onPress={onBrowseCommunityTemplates}
+            >
+              <View style={styles.templateIconContainer}>
+                <Feather name="users" size={40} color={theme.primary} />
               </View>
-            )}
+              <Text style={[styles.templateOptionTitle, { color: theme.text, fontFamily: "Inter_500Medium" }]}>
+                Community Templates
+              </Text>
+              <Text style={[styles.templateOptionDesc, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
+                Browse templates shared by other users
+              </Text>
+            </TouchableOpacity>
 
-            {loading && (
-              <View style={styles.loadingContainer}>
-                <Text style={[styles.loadingText, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-                  Loading community templates...
-                </Text>
+            {/* Start Blank */}
+            <TouchableOpacity
+              style={[styles.templateOption, { backgroundColor: theme.background, borderColor: theme.border }]}
+              onPress={onStartBlank}
+            >
+              <View style={styles.templateIconContainer}>
+                <Feather name="plus-circle" size={40} color={theme.primary} />
               </View>
-            )}
-          </ScrollView>
+              <Text style={[styles.templateOptionTitle, { color: theme.text, fontFamily: "Inter_500Medium" }]}>
+                Start Blank
+              </Text>
+              <Text style={[styles.templateOptionDesc, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
+                Create your own semester structure
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <Text style={[styles.welcomeNote, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
             You can always add or remove courses later

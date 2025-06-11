@@ -1,6 +1,6 @@
 // main calculator screen
 import { useState, useEffect, useRef, useCallback } from "react"
-import { ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Animated, StatusBar, Alert } from "react-native"
+import { ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Animated, StatusBar } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import * as SplashScreen from "expo-splash-screen"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -20,16 +20,20 @@ import EditSemesterModal from "../components/modals/EditSemesterModal"
 import AddCourseModal from "../components/modals/AddCourseModal"
 import SettingsModal from "../components/modals/SettingsModal"
 import InfoModal from "../components/modals/InfoModal"
+import ErrorModal from "../components/modals/ErrorModal"
+import ConfirmationModal from "../components/modals/ConfirmationModal"
 
 // screens
 import LoginScreen from "./LoginScreen"
 import TemplateSubmissionScreen from "./TemplateSubmissionScreen"
 import AdminScreen from "./AdminScreen"
+import CommunityTemplatesScreen from "./CommunityTemplatesScreen"
 
 // custom hooks
 import { useTheme } from "../hooks/useTheme"
 import { useFirstLaunch } from "../hooks/useFirstLaunch"
 import { useStorage } from "../hooks/useStorage"
+import { useErrorHandler } from "../hooks/useErrorHandler"
 
 // contexts
 import { useAuth } from "../contexts/AuthContext"
@@ -64,16 +68,16 @@ const GPACalculator = () => {
     setAppIsReady, // added setAppIsReady from useFirstLaunch hook
     markAsLaunched,
     checkFirstLaunch,
-  } = useFirstLaunch()
+  } = useFirstLaunch(user?.uid)
 
   // theme stuff
   const { darkMode, setDarkMode, theme } = useTheme()
 
   // async storage handling
-  const { semesters, setSemesters, loadSavedData } = useStorage(isFirstLaunch)
+  const { semesters, setSemesters, loadSavedData } = useStorage(isFirstLaunch, user?.uid)
 
   // screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'calculator' | 'templateSubmission' | 'admin'>('calculator')
+  const [currentScreen, setCurrentScreen] = useState<'calculator' | 'templateSubmission' | 'admin' | 'communityTemplates'>('calculator')
 
   // state variables
   const [currentSemesterIndex, setCurrentSemesterIndex] = useState(0)
@@ -92,6 +96,18 @@ const GPACalculator = () => {
   const [infoModalVisible, setInfoModalVisible] = useState(false)
   const [displaySemesterGPA, setDisplaySemesterGPA] = useState("0.00")
   const [displayCumulativeGPA, setDisplayCumulativeGPA] = useState("0.00")
+
+  // error handling
+  const { error, showError, showSuccess, hideError } = useErrorHandler()
+  const [confirmationModal, setConfirmationModal] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    type: 'danger' as 'danger' | 'warning' | 'info',
+    onConfirm: () => {}
+  })
 
   // ref to store fadeAnim values for each course
   const fadeAnimRef = useRef<Record<string, Animated.Value>>({})
@@ -207,8 +223,11 @@ const GPACalculator = () => {
       })
       fadeAnimRef.current = initialFadeAnims
 
-      // Save the selected template
-      await AsyncStorage.setItem("semesters", JSON.stringify(selectedTemplate))
+      // Save the selected template with user-specific key
+      if (user?.uid) {
+        const semestersKey = `semesters_${user.uid}`
+        await AsyncStorage.setItem(semestersKey, JSON.stringify(selectedTemplate))
+      }
 
       // Close the modal
       setTemplateSelectionVisible(false)
@@ -217,6 +236,20 @@ const GPACalculator = () => {
       // Use defaults if there's an error
       setSemesters([...defaultSemesters])
     }
+  }
+
+  const handleStartBlank = () => {
+    handleTemplateSelection(false)
+  }
+
+  const handleBrowseCommunityTemplates = () => {
+    setCurrentScreen('communityTemplates')
+    setTemplateSelectionVisible(false)
+  }
+
+  const handleSelectCommunityTemplate = (template: Template) => {
+    handleTemplateSelection(false, template)
+    setCurrentScreen('calculator')
   }
 
   const toggleShowMore = (index: number) => {
@@ -241,7 +274,7 @@ const GPACalculator = () => {
 
   const addSemester = () => {
     if (!newSemesterName.trim()) {
-      Alert.alert("Error", "Please enter a semester name")
+      showError("Invalid Input", "Please enter a semester name")
       return
     }
 
@@ -257,32 +290,34 @@ const GPACalculator = () => {
   }
 
   const deleteSemester = (index: number) => {
-    Alert.alert("Delete Semester", `Are you sure you want to delete ${semesters[index].name}?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          const newSemesters = [...semesters]
-          newSemesters.splice(index, 1)
-          setSemesters(newSemesters)
+    setConfirmationModal({
+      visible: true,
+      title: "Delete Semester",
+      message: `Are you sure you want to delete ${semesters[index].name}?`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: 'danger',
+      onConfirm: () => {
+        const newSemesters = [...semesters]
+        newSemesters.splice(index, 1)
+        setSemesters(newSemesters)
 
-          if (currentSemesterIndex >= newSemesters.length) {
-            setCurrentSemesterIndex(Math.max(0, newSemesters.length - 1))
-          }
-        },
-      },
-    ])
+        if (currentSemesterIndex >= newSemesters.length) {
+          setCurrentSemesterIndex(Math.max(0, newSemesters.length - 1))
+        }
+        setConfirmationModal({ ...confirmationModal, visible: false })
+      }
+    })
   }
 
   const addOrEditCourse = () => {
     if (!newCourseName.trim()) {
-      Alert.alert("Error", "Please enter a course name")
+      showError("Invalid Input", "Please enter a course name")
       return
     }
 
     if (!newCourseCredits.trim() || isNaN(Number.parseFloat(newCourseCredits))) {
-      Alert.alert("Error", "Please enter valid credits")
+      showError("Invalid Input", "Please enter valid credits")
       return
     }
 
@@ -325,44 +360,42 @@ const GPACalculator = () => {
   }
 
   const deleteCourse = (index: number) => {
-    Alert.alert(
-      "Delete Course",
-      `Are you sure you want to delete ${semesters[currentSemesterIndex].courses[index].name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            const newSemesters = [...semesters]
-            newSemesters[currentSemesterIndex].courses.splice(index, 1)
-            setSemesters(newSemesters)
+    setConfirmationModal({
+      visible: true,
+      title: "Delete Course",
+      message: `Are you sure you want to delete ${semesters[currentSemesterIndex].courses[index].name}?`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: 'danger',
+      onConfirm: () => {
+        const newSemesters = [...semesters]
+        newSemesters[currentSemesterIndex].courses.splice(index, 1)
+        setSemesters(newSemesters)
 
-            // update expand state array
-            const newShowMore = [...showMore]
-            newShowMore.splice(index, 1)
-            setShowMore(newShowMore)
+        // update expand state array
+        const newShowMore = [...showMore]
+        newShowMore.splice(index, 1)
+        setShowMore(newShowMore)
 
-            // cleanup animation refs for the deleted course
-            const newFadeAnimRef = { ...fadeAnimRef.current }
-            // shift all keys for courses after the deleted one
-            for (let i = index; i < newSemesters[currentSemesterIndex].courses.length; i++) {
-              const nextKey = `${currentSemesterIndex}-${i + 1}`
-              const currentKey = `${currentSemesterIndex}-${i}`
-              newFadeAnimRef[currentKey] = newFadeAnimRef[nextKey]
-            }
-            // remove the last one
-            delete newFadeAnimRef[`${currentSemesterIndex}-${newSemesters[currentSemesterIndex].courses.length}`]
-            fadeAnimRef.current = newFadeAnimRef
-          },
-        },
-      ],
-    )
+        // cleanup animation refs for the deleted course
+        const newFadeAnimRef = { ...fadeAnimRef.current }
+        // shift all keys for courses after the deleted one
+        for (let i = index; i < newSemesters[currentSemesterIndex].courses.length; i++) {
+          const nextKey = `${currentSemesterIndex}-${i + 1}`
+          const currentKey = `${currentSemesterIndex}-${i}`
+          newFadeAnimRef[currentKey] = newFadeAnimRef[nextKey]
+        }
+        // remove the last one
+        delete newFadeAnimRef[`${currentSemesterIndex}-${newSemesters[currentSemesterIndex].courses.length}`]
+        fadeAnimRef.current = newFadeAnimRef
+        setConfirmationModal({ ...confirmationModal, visible: false })
+      }
+    })
   }
 
   const editSemester = () => {
     if (!editSemesterName.trim()) {
-      Alert.alert("Error", "Please enter a semester name")
+      showError("Invalid Input", "Please enter a semester name")
       return
     }
 
@@ -375,39 +408,41 @@ const GPACalculator = () => {
   }
 
   const resetAllData = () => {
-    Alert.alert(
-      "Reset All Data",
-      "Are you sure you want to reset all data? This will delete all semesters and courses.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Reset",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // wipe all storage
-              await AsyncStorage.removeItem("semesters")
-              await AsyncStorage.removeItem("hasLaunched")
+    setConfirmationModal({
+      visible: true,
+      title: "Choose a template",
+      message: "Are you sure you want to return to the template screen? This will erase your current data.",
+      confirmText: "Reset",
+      cancelText: "Cancel",
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          // wipe user-specific storage
+          if (user?.uid) {
+            const semestersKey = `semesters_${user.uid}`
+            const hasLaunchedKey = `hasLaunched_${user.uid}`
+            await AsyncStorage.removeItem(semestersKey)
+            await AsyncStorage.removeItem(hasLaunchedKey)
+          }
 
-              // reset app to initial state
-              setSemesters([])
-              setCurrentSemesterIndex(0)
-              setIsFirstLaunch(true)
-              setTemplateSelectionVisible(true)
+          // reset app to initial state
+          setSemesters([])
+          setCurrentSemesterIndex(0)
+          setIsFirstLaunch(true)
+          setTemplateSelectionVisible(true)
 
-              // clear animation refs
-              fadeAnimRef.current = {}
+          // clear animation refs
+          fadeAnimRef.current = {}
 
-              // close modal
-              setSettingsVisible(false)
-            } catch (error) {
-              console.error("Error resetting data:", error)
-              Alert.alert("Error", "There was a problem resetting your data.")
-            }
-          },
-        },
-      ],
-    )
+          // close modal
+          setSettingsVisible(false)
+          setConfirmationModal({ ...confirmationModal, visible: false })
+        } catch (error) {
+          console.error("Error resetting data:", error)
+          showError("Reset Failed", "There was a problem resetting your data.")
+        }
+      }
+    })
   }
 
   // button press animations
@@ -432,12 +467,8 @@ const GPACalculator = () => {
     return null
   }
 
-  // Temporarily bypass authentication for testing
-  // TODO: Remove this bypass once Firebase is properly configured
-  const skipAuth = true
-  
-  // show login screen if user is not authenticated (and not bypassing auth)
-  if (!skipAuth && !user) {
+  // show login screen if user is not authenticated
+  if (!user) {
     return <LoginScreen theme={theme} />
   }
 
@@ -450,7 +481,7 @@ const GPACalculator = () => {
         onBack={() => setCurrentScreen('calculator')}
         onSubmitSuccess={() => {
           setCurrentScreen('calculator')
-          Alert.alert("Success", "Template submitted for review!")
+          showSuccess("Template Submitted", "Template submitted for review!")
         }}
       />
     )
@@ -465,13 +496,33 @@ const GPACalculator = () => {
     )
   }
 
+  if (currentScreen === 'communityTemplates') {
+    return (
+      <CommunityTemplatesScreen 
+        theme={theme}
+        onBack={() => {
+          if (isFirstLaunch) {
+            // If first launch, go back to welcome screen
+            setTemplateSelectionVisible(true)
+            setCurrentScreen('calculator')
+          } else {
+            // Otherwise go back to calculator
+            setCurrentScreen('calculator')
+          }
+        }}
+        onSelectTemplate={handleSelectCommunityTemplate}
+      />
+    )
+  }
+
   // show template selection on first launch
   if (isFirstLaunch && templateSelectionVisible) {
     return (
       <TemplateSelectionModal
         visible={templateSelectionVisible}
         theme={theme}
-        handleTemplateSelection={handleTemplateSelection}
+        onStartBlank={handleStartBlank}
+        onBrowseCommunityTemplates={handleBrowseCommunityTemplates}
       />
     )
   }
@@ -616,6 +667,27 @@ const GPACalculator = () => {
       />
 
       <InfoModal visible={infoModalVisible} theme={theme} onClose={() => setInfoModalVisible(false)} />
+
+      <ErrorModal
+        visible={error.visible}
+        title={error.title}
+        message={error.message}
+        type={error.type}
+        theme={theme}
+        onClose={hideError}
+      />
+
+      <ConfirmationModal
+        visible={confirmationModal.visible}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        confirmText={confirmationModal.confirmText}
+        cancelText={confirmationModal.cancelText}
+        type={confirmationModal.type}
+        theme={theme}
+        onConfirm={confirmationModal.onConfirm}
+        onCancel={() => setConfirmationModal({ ...confirmationModal, visible: false })}
+      />
     </SafeAreaView>
   )
 }
