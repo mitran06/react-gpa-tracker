@@ -1,5 +1,3 @@
-"use client"
-
 // hook for handling persistent storage
 import { useState, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"

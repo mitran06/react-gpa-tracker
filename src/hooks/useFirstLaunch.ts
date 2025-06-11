@@ -1,5 +1,3 @@
-"use client"
-
 // hook for detecting first app launch
 import { useState, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"

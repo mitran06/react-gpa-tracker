@@ -1,5 +1,3 @@
-"use client"
-
 // main calculator screen
 import { useState, useEffect, useRef, useCallback } from "react"
 import { ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Animated, StatusBar, Alert } from "react-native"
@@ -23,16 +21,27 @@ import AddCourseModal from "../components/modals/AddCourseModal"
 import SettingsModal from "../components/modals/SettingsModal"
 import InfoModal from "../components/modals/InfoModal"
 
+// screens
+import LoginScreen from "./LoginScreen"
+import TemplateSubmissionScreen from "./TemplateSubmissionScreen"
+import AdminScreen from "./AdminScreen"
+
 // custom hooks
 import { useTheme } from "../hooks/useTheme"
 import { useFirstLaunch } from "../hooks/useFirstLaunch"
 import { useStorage } from "../hooks/useStorage"
+
+// contexts
+import { useAuth } from "../contexts/AuthContext"
 
 // calculation utilities
 import { calculateGPA, calculateCumulativeGPA, animateGPAValue } from "../utils/calculations"
 
 // templates
 import { defaultSemesters, emptyTemplate } from "../constants/templates"
+
+// types
+import { Template, Semester, Course } from "../types"
 
 const GPACalculator = () => {
   // font loading
@@ -41,6 +50,9 @@ const GPACalculator = () => {
     Inter_500Medium,
     Inter_700Bold,
   })
+
+  // authentication
+  const { user, loading: authLoading, logout, isAdmin } = useAuth()
 
   // first launch detection and template selection
   const {
@@ -60,9 +72,12 @@ const GPACalculator = () => {
   // async storage handling
   const { semesters, setSemesters, loadSavedData } = useStorage(isFirstLaunch)
 
+  // screen navigation state
+  const [currentScreen, setCurrentScreen] = useState<'calculator' | 'templateSubmission' | 'admin'>('calculator')
+
   // state variables
   const [currentSemesterIndex, setCurrentSemesterIndex] = useState(0)
-  const [showMore, setShowMore] = useState([])
+  const [showMore, setShowMore] = useState<boolean[]>([])
   const [scaleAnim] = useState(new Animated.Value(0.95))
   const [settingsVisible, setSettingsVisible] = useState(false)
   const [addSemesterModal, setAddSemesterModal] = useState(false)
@@ -79,7 +94,7 @@ const GPACalculator = () => {
   const [displayCumulativeGPA, setDisplayCumulativeGPA] = useState("0.00")
 
   // ref to store fadeAnim values for each course
-  const fadeAnimRef = useRef({})
+  const fadeAnimRef = useRef<Record<string, Animated.Value>>({})
 
   // animation refs
   const addButtonScale = new Animated.Value(1)
@@ -110,7 +125,7 @@ const GPACalculator = () => {
   }, [appIsReady, fontsLoaded])
 
   // helper to get fadeAnim for a specific course
-  const getFadeAnim = (semesterIndex, courseIndex) => {
+  const getFadeAnim = (semesterIndex: number, courseIndex: number) => {
     const key = `${semesterIndex}-${courseIndex}`
     if (!fadeAnimRef.current[key]) {
       fadeAnimRef.current[key] = new Animated.Value(0)
@@ -156,13 +171,25 @@ const GPACalculator = () => {
   }, [semesters, currentSemesterIndex])
 
   // Handle template selection
-  const handleTemplateSelection = async (useDefaultTemplate) => {
+  const handleTemplateSelection = async (useDefaultTemplate: boolean, firebaseTemplate?: Template) => {
     try {
       // Mark that the app has been launched
       await markAsLaunched()
 
       // Set the selected template
-      const selectedTemplate = useDefaultTemplate ? [...defaultSemesters] : [...emptyTemplate]
+      let selectedTemplate: Semester[]
+      
+      if (firebaseTemplate) {
+        // Use Firebase template
+        selectedTemplate = firebaseTemplate.structure.semesters
+      } else if (useDefaultTemplate) {
+        // Use default template
+        selectedTemplate = [...defaultSemesters]
+      } else {
+        // Use empty template
+        selectedTemplate = [...emptyTemplate]
+      }
+      
       setSemesters(selectedTemplate)
 
       // Initialize showMore array
@@ -171,9 +198,9 @@ const GPACalculator = () => {
       }
 
       // Initialize fadeAnim values
-      const initialFadeAnims = {}
+      const initialFadeAnims: Record<string, Animated.Value> = {}
       selectedTemplate.forEach((semester, semesterIdx) => {
-        semester.courses.forEach((_, courseIdx) => {
+        semester.courses.forEach((_: Course, courseIdx: number) => {
           const key = `${semesterIdx}-${courseIdx}`
           initialFadeAnims[key] = new Animated.Value(0)
         })
@@ -192,7 +219,7 @@ const GPACalculator = () => {
     }
   }
 
-  const toggleShowMore = (index) => {
+  const toggleShowMore = (index: number) => {
     const newShowMore = [...showMore]
     newShowMore[index] = !newShowMore[index]
     setShowMore(newShowMore)
@@ -204,7 +231,7 @@ const GPACalculator = () => {
     }).start()
   }
 
-  const handleGradeChange = (courseIndex, value) => {
+  const handleGradeChange = (courseIndex: number, value: string) => {
     const newSemesters = [...semesters]
     newSemesters[currentSemesterIndex].courses[courseIndex].grade = value
 
@@ -229,7 +256,7 @@ const GPACalculator = () => {
     setAddSemesterModal(false)
   }
 
-  const deleteSemester = (index) => {
+  const deleteSemester = (index: number) => {
     Alert.alert("Delete Semester", `Are you sure you want to delete ${semesters[index].name}?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -289,7 +316,7 @@ const GPACalculator = () => {
     setAddCourseModal(false)
   }
 
-  const editCourse = (index) => {
+  const editCourse = (index: number) => {
     const course = semesters[currentSemesterIndex].courses[index]
     setNewCourseName(course.name)
     setNewCourseCredits(course.credits.toString())
@@ -297,7 +324,7 @@ const GPACalculator = () => {
     setAddCourseModal(true)
   }
 
-  const deleteCourse = (index) => {
+  const deleteCourse = (index: number) => {
     Alert.alert(
       "Delete Course",
       `Are you sure you want to delete ${semesters[currentSemesterIndex].courses[index].name}?`,
@@ -400,9 +427,42 @@ const GPACalculator = () => {
     }).start()
   }
 
-  // wait for fonts before rendering
-  if (!fontsLoaded) {
+  // wait for fonts and auth loading before rendering
+  if (!fontsLoaded || authLoading) {
     return null
+  }
+
+  // Temporarily bypass authentication for testing
+  // TODO: Remove this bypass once Firebase is properly configured
+  const skipAuth = true
+  
+  // show login screen if user is not authenticated (and not bypassing auth)
+  if (!skipAuth && !user) {
+    return <LoginScreen theme={theme} />
+  }
+
+  // handle different screens
+  if (currentScreen === 'templateSubmission') {
+    return (
+      <TemplateSubmissionScreen 
+        theme={theme}
+        currentSemesters={semesters}
+        onBack={() => setCurrentScreen('calculator')}
+        onSubmitSuccess={() => {
+          setCurrentScreen('calculator')
+          Alert.alert("Success", "Template submitted for review!")
+        }}
+      />
+    )
+  }
+
+  if (currentScreen === 'admin' && isAdmin) {
+    return (
+      <AdminScreen 
+        theme={theme}
+        onBack={() => setCurrentScreen('calculator')}
+      />
+    )
   }
 
   // show template selection on first launch
@@ -549,6 +609,10 @@ const GPACalculator = () => {
         setInfoModalVisible={setInfoModalVisible}
         resetAllData={resetAllData}
         onClose={() => setSettingsVisible(false)}
+        onNavigateToTemplateSubmission={() => setCurrentScreen('templateSubmission')}
+        onNavigateToAdmin={isAdmin ? () => setCurrentScreen('admin') : undefined}
+        onLogout={logout}
+        isAdmin={isAdmin}
       />
 
       <InfoModal visible={infoModalVisible} theme={theme} onClose={() => setInfoModalVisible(false)} />

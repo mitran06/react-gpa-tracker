@@ -21,3 +21,25 @@ export interface Theme {
   success: string
   danger: string
 }
+
+// Firebase template types
+export interface TemplateStructure {
+  semesters: Semester[]
+}
+
+export interface Template {
+  id?: string
+  name: string
+  description: string
+  structure: TemplateStructure
+  createdBy: string
+  isApproved: boolean
+  createdAt: Date | string | any // Allow FieldValue from Firestore
+}
+
+// Auth user type
+export interface User {
+  uid: string
+  email: string | null
+  displayName: string | null
+}

@@ -1,4 +1,3 @@
-"use client"
 import { View, Text, TouchableOpacity, Modal, Switch, StyleSheet } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import type { Theme } from "../../types"
@@ -11,6 +10,10 @@ interface SettingsModalProps {
   setInfoModalVisible: (visible: boolean) => void
   resetAllData: () => void
   onClose: () => void
+  onNavigateToTemplateSubmission: () => void
+  onNavigateToAdmin?: () => void
+  onLogout: () => void
+  isAdmin: boolean
 }
 
 const SettingsModal = ({
@@ -21,6 +24,10 @@ const SettingsModal = ({
   setInfoModalVisible,
   resetAllData,
   onClose,
+  onNavigateToTemplateSubmission,
+  onNavigateToAdmin,
+  onLogout,
+  isAdmin,
 }: SettingsModalProps) => {
   return (
     <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
@@ -49,6 +56,35 @@ const SettingsModal = ({
                 thumbColor="#f4f3f4"
               />
             </View>
+
+            <TouchableOpacity style={styles.settingItem} onPress={() => {
+              onClose()
+              onNavigateToTemplateSubmission()
+            }}>
+              <View style={styles.settingLabelContainer}>
+                <Feather name="upload" size={20} color={theme.text} />
+                <Text style={[styles.settingLabel, { color: theme.text, fontFamily: "Inter_400Regular" }]}>
+                  Submit Template
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={20} color={theme.subtext} />
+            </TouchableOpacity>
+
+            {isAdmin && onNavigateToAdmin && (
+              <TouchableOpacity style={styles.settingItem} onPress={() => {
+                onClose()
+                onNavigateToAdmin()
+              }}>
+                <View style={styles.settingLabelContainer}>
+                  <Feather name="shield" size={20} color={theme.text} />
+                  <Text style={[styles.settingLabel, { color: theme.text, fontFamily: "Inter_400Regular" }]}>
+                    Admin Panel
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={20} color={theme.subtext} />
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity style={styles.settingItem} onPress={() => setInfoModalVisible(true)}>
               <View style={styles.settingLabelContainer}>
                 <Feather name="info" size={20} color={theme.text} />
@@ -57,6 +93,16 @@ const SettingsModal = ({
                 </Text>
               </View>
               <Feather name="chevron-right" size={20} color={theme.subtext} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.logoutButton, { backgroundColor: theme.primary }]} onPress={() => {
+              onClose()
+              onLogout()
+            }}>
+              <Feather name="log-out" size={20} color="#ffffff" />
+              <Text style={[styles.logoutButtonText, { color: "#ffffff", fontFamily: "Inter_500Medium" }]}>
+                Logout
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.resetButton, { backgroundColor: theme.danger }]} onPress={resetAllData}>
@@ -141,6 +187,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   resetButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  logoutButtonText: {
     fontSize: 16,
     fontWeight: "500",
     marginLeft: 8,

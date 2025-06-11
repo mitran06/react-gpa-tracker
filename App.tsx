@@ -1,6 +1,7 @@
 "use client"
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter"
 import GPACalculator from "./src/screens/GPACalculator"
+import { AuthProvider } from "./src/contexts/AuthContext"
 
 const App = () => {
   // load fonts first
@@ -14,7 +15,11 @@ const App = () => {
     return null
   }
 
-  return <GPACalculator />
+  return (
+    <AuthProvider>
+      <GPACalculator />
+    </AuthProvider>
+  )
 }
 
 export default App
