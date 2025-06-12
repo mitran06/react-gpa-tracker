@@ -78,9 +78,7 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
         `${emptySemesters.length} semester(s) have no courses. Please add courses or remove empty semesters.`
       )
       return
-    }
-
-    setLoading(true)
+    }    setLoading(true)
     try {
       const structure: TemplateStructure = {
         semesters: currentSemesters.map(semester => ({

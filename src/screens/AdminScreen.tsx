@@ -37,13 +37,18 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
   }>({
     visible: false,
     title: '',
-    message: '',
-    confirmText: '',
+    message: '',    confirmText: '',
     onConfirm: () => {},
     type: 'info'
   })
+  
   const { isAdmin } = useAuth()
   const { error, showError, showSuccess, hideError } = useErrorHandler()
+
+  // Debug admin status
+  useEffect(() => {
+    console.log('🔑 Admin Screen - isAdmin:', isAdmin)
+  }, [isAdmin])
 
   const loadPendingTemplates = useCallback(async () => {
     try {
@@ -67,7 +72,6 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
     setRefreshing(true)
     loadPendingTemplates()
   }, [loadPendingTemplates])
-
   const handleApprove = async (templateId: string) => {
     setConfirmationModal({
       visible: true,
@@ -78,17 +82,18 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
       onConfirm: async () => {
         setConfirmationModal(prev => ({ ...prev, visible: false }))
         try {
+          console.log('🔄 Starting template approval for:', templateId)
           await TemplateService.approveTemplate(templateId)
           setPendingTemplates(prev => prev.filter(t => t.id !== templateId))
           showSuccess('Template Approved', 'The template has been approved and is now available to all users.')
+          console.log('✅ Template approval completed:', templateId)
         } catch (error) {
-          console.error('Error approving template:', error)
+          console.error('❌ Error approving template:', error)
           showError('Approval Failed', 'Failed to approve the template. Please try again.')
         }
       }
     })
   }
-
   const handleReject = async (templateId: string) => {
     setConfirmationModal({
       visible: true,
@@ -99,11 +104,13 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
       onConfirm: async () => {
         setConfirmationModal(prev => ({ ...prev, visible: false }))
         try {
+          console.log('🔄 Starting template rejection for:', templateId)
           await TemplateService.deleteTemplate(templateId)
           setPendingTemplates(prev => prev.filter(t => t.id !== templateId))
           showSuccess('Template Rejected', 'The template has been rejected and removed from the system.')
+          console.log('✅ Template rejection completed:', templateId)
         } catch (error) {
-          console.error('Error rejecting template:', error)
+          console.error('❌ Error rejecting template:', error)
           showError('Rejection Failed', 'Failed to reject the template. Please try again.')
         }
       }
@@ -309,10 +316,28 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
                   </View>
                 ))}
               </ScrollView>
-            )}
-          </View>
+            )}          </View>
         </View>
-      </Modal>
+      </Modal>      {/* Error Modal */}
+      <ErrorModal
+        visible={error?.visible || false}
+        title={error?.title || ''}
+        message={error?.message || ''}
+        onClose={hideError}
+        theme={theme}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={confirmationModal.visible}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        confirmText={confirmationModal.confirmText}
+        onConfirm={confirmationModal.onConfirm}
+        onCancel={() => setConfirmationModal(prev => ({ ...prev, visible: false }))}
+        type={confirmationModal.type}
+        theme={theme}
+      />
     </SafeAreaView>
   )
 }

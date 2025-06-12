@@ -25,6 +25,7 @@ import ConfirmationModal from "../components/modals/ConfirmationModal"
 
 // screens
 import LoginScreen from "./LoginScreen"
+import EmailVerificationScreen from "./EmailVerificationScreen"
 import TemplateSubmissionScreen from "./TemplateSubmissionScreen"
 import AdminScreen from "./AdminScreen"
 import CommunityTemplatesScreen from "./CommunityTemplatesScreen"
@@ -470,6 +471,12 @@ const GPACalculator = () => {
   // show login screen if user is not authenticated
   if (!user) {
     return <LoginScreen theme={theme} />
+  }
+
+  // show email verification screen if user is not verified
+  // No exceptions - all users must verify their email
+  if (user && !user.emailVerified) {
+    return <EmailVerificationScreen theme={theme} />
   }
 
   // handle different screens

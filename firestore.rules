@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /templates/{templateId} {
+      // Anyone authenticated can read approved templates
+      allow read: if request.auth != null && resource.data.isApproved == true;
+        // Anyone authenticated with verified email can create templates
+      // No exceptions - all users must verify their email
+      allow create: if request.auth != null 
+        && request.resource.data.isApproved == false
+        && request.auth.token.email_verified == true;      // Admin can update templates (approve them)
+      allow update: if request.auth != null 
+        && request.auth.uid == "B0VcWqSh0wcjcj6BJv9a8PvCXRd2";
+      
+      // Admin can delete templates
+      allow delete: if request.auth != null 
+        && request.auth.uid == "B0VcWqSh0wcjcj6BJv9a8PvCXRd2";
+      
+      // Admin can read all templates (including unapproved ones)
+      allow read: if request.auth != null 
+        && request.auth.uid == "B0VcWqSh0wcjcj6BJv9a8PvCXRd2";
+    }
+  }
+}

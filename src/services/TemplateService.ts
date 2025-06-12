@@ -11,13 +11,12 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore'
-import { db } from '../../firebaseConfig'
+import { auth, db } from '../../firebaseConfig'
 import type { Template, TemplateStructure } from '../types'
 
 const TEMPLATES_COLLECTION = 'templates'
 
-export class TemplateService {
-  // Submit a new template (marked as not approved by default)
+export class TemplateService {  // Submit a new template (marked as not approved by default)
   static async submitTemplate(
     name: string,
     description: string,
@@ -37,10 +36,12 @@ export class TemplateService {
         createdAt: serverTimestamp()
       }
 
+      console.log('📝 Submitting template:', { name, createdBy })
       const docRef = await addDoc(collection(db, TEMPLATES_COLLECTION), template)
+      console.log('✅ Template submitted successfully:', docRef.id)
       return docRef.id
     } catch (error) {
-      console.error('Error submitting template:', error)
+      console.error('❌ Error submitting template:', error)
       throw error
     }
   }
@@ -108,16 +109,17 @@ export class TemplateService {
       throw error
     }
   }
-
   // Approve a template (admin only)
   static async approveTemplate(templateId: string): Promise<void> {
     try {
+      console.log('🔄 Approving template:', templateId)
       const templateRef = doc(db, TEMPLATES_COLLECTION, templateId)
       await updateDoc(templateRef, {
         isApproved: true
       })
+      console.log('✅ Template approved successfully:', templateId)
     } catch (error) {
-      console.error('Error approving template:', error)
+      console.error('❌ Error approving template:', error)
       throw error
     }
   }
@@ -125,10 +127,12 @@ export class TemplateService {
   // Delete/reject a template (admin only)
   static async deleteTemplate(templateId: string): Promise<void> {
     try {
+      console.log('🔄 Deleting template:', templateId)
       const templateRef = doc(db, TEMPLATES_COLLECTION, templateId)
       await deleteDoc(templateRef)
+      console.log('✅ Template deleted successfully:', templateId)
     } catch (error) {
-      console.error('Error deleting template:', error)
+      console.error('❌ Error deleting template:', error)
       throw error
     }
   }

@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useErrorHandler, isValidEmail, validatePassword } from '../hooks/useErrorHandler'
 import ErrorModal from '../components/modals/ErrorModal'
+import EmailVerificationModal from '../components/modals/EmailVerificationModal'
 import type { Theme } from '../types'
 
 interface LoginScreenProps {
@@ -27,9 +28,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [showVerificationModal, setShowVerificationModal] = useState(false)
+  const [verificationEmail, setVerificationEmail] = useState('')
 
-  const { login, register } = useAuth()
-  const { error, showError, hideError } = useErrorHandler()
+  const { login, register, user } = useAuth()
+  const { error, showError, showSuccess, hideError } = useErrorHandler()
 
   const handleSubmit = async () => {
     // Basic validation
@@ -67,14 +70,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
         showError('Invalid Password', 'Password must be at least 6 characters')
         return
       }
-    }
-
-    setLoading(true)
+    }    setLoading(true)
     try {
       if (isLogin) {
         await login(email.trim(), password)
+        // After successful login, check if email is verified
+        // This will be handled by the auth state change in the main app
       } else {
-        await register(email.trim(), password)
+        const result = await register(email.trim(), password)
+        if (result.needsVerification) {
+          // Show verification modal for new registrations
+          setVerificationEmail(email.trim())
+          setShowVerificationModal(true)
+          showSuccess('Account Created', 'Please check your email and click the verification link to complete registration.')
+        }
       }
     } catch (error: any) {
       showError(
@@ -218,9 +227,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
               </TouchableOpacity>
             </View>
           </View>        </ScrollView>
-      </KeyboardAvoidingView>
-
-      {/* Custom Error Modal */}
+      </KeyboardAvoidingView>      {/* Custom Error Modal */}
       <ErrorModal
         visible={error.visible}
         title={error.title}
@@ -228,6 +235,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
         type={error.type}
         theme={theme}
         onClose={hideError}
+      />
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        visible={showVerificationModal}
+        theme={theme}
+        userEmail={verificationEmail}
+        onClose={() => setShowVerificationModal(false)}
       />
     </SafeAreaView>
   )

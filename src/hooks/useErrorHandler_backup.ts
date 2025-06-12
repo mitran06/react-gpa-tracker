@@ -34,8 +34,7 @@ export const useErrorHandler = () => {
       case 'auth/user-disabled':
         return 'This account has been disabled. Please contact support.'
       case 'auth/user-not-found':
-        return 'No account found with this email address. Please create an account first.'
-      case 'auth/wrong-password':
+        return 'No account found with this email address. Please create an account first.'      case 'auth/wrong-password':
         return 'Incorrect password. Please try again.'
       case 'auth/invalid-credential':
         return 'Invalid email or password. Please check your credentials and try again.'
