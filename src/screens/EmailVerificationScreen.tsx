@@ -124,11 +124,17 @@ const EmailVerificationScreen: React.FC<EmailVerificationScreenProps> = ({ theme
             <Text style={[styles.email, { color: theme.text, fontFamily: 'Inter_600SemiBold' }]}>
               {user?.email}
             </Text>
-          </View>
-
-          <Text style={[styles.instruction, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+          </View>          <Text style={[styles.instruction, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
             Please check your inbox (and spam folder) and click the link to verify your account.
           </Text>
+
+          {/* Cleanup Notice */}
+          <View style={[styles.cleanupNotice, { backgroundColor: theme.background, borderColor: theme.border }]}>
+            <Feather name="info" size={16} color={theme.primary} />
+            <Text style={[styles.cleanupText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+              Note: Unverified accounts are automatically deleted after 7 days to keep the system clean.
+            </Text>
+          </View>
 
           <View style={styles.statusContainer}>
             <View style={styles.statusRow}>
@@ -160,11 +166,12 @@ const EmailVerificationScreen: React.FC<EmailVerificationScreenProps> = ({ theme
               {checkingVerification ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
-                <Text style={[styles.buttonText, { fontFamily: 'Inter_600SemiBold' }]}>
-                  Check Verification
+                <Text style={[styles.buttonText, { fontFamily: 'Inter_600SemiBold' }]}>                  Check Verification
                 </Text>
               )}
-            </TouchableOpacity>            <TouchableOpacity
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[
                 styles.button,
                 styles.secondaryButton,
@@ -342,14 +349,27 @@ const styles = StyleSheet.create({
   footerButtonText: {
     fontSize: 14,
     textAlign: 'center',
-  },
-  helpContainer: {
+  },  helpContainer: {
     marginTop: 24,
   },
   helpText: {
     fontSize: 12,
     lineHeight: 16,
     textAlign: 'center',
+  },
+  cleanupNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    gap: 8,
+  },
+  cleanupText: {
+    fontSize: 12,
+    lineHeight: 16,
+    flex: 1,
   },
 })
 

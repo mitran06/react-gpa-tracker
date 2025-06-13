@@ -54,9 +54,7 @@ const GPACalculator = () => {
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,
-  })
-
-  // authentication
+  })  // authentication
   const { user, loading: authLoading, logout, isAdmin } = useAuth()
 
   // first launch detection and template selection
@@ -73,9 +71,15 @@ const GPACalculator = () => {
 
   // theme stuff
   const { darkMode, setDarkMode, theme } = useTheme()
-
   // async storage handling
-  const { semesters, setSemesters, loadSavedData } = useStorage(isFirstLaunch, user?.uid)
+  const { semesters, setSemesters, loadSavedData, saveTemplateInfo, loadTemplateInfo } = useStorage(isFirstLaunch, user?.uid)
+
+  // template info state for cloud sync
+  const [templateInfo, setTemplateInfo] = useState({
+    name: 'Default Template',    isDefault: true,
+    isCustom: false,
+    templateId: undefined as string | undefined
+  })
 
   // screen navigation state
   const [currentScreen, setCurrentScreen] = useState<'calculator' | 'templateSubmission' | 'admin' | 'communityTemplates'>('calculator')
@@ -183,9 +187,32 @@ const GPACalculator = () => {
         setDisplayCumulativeGPA(newCumulativeGPA)
       } else {
         animateGPAValue(displayCumulativeGPA, newCumulativeGPA, setDisplayCumulativeGPA)
+      }    }
+  }, [semesters, currentSemesterIndex])
+
+  // Handle cloud sync and data loading when user changes
+  useEffect(() => {
+    const handleUserDataSync = async () => {
+      if (!user?.uid || isFirstLaunch) return
+
+      try {
+        // Load template info from local storage first
+        const localTemplateInfo = await loadTemplateInfo()
+        if (localTemplateInfo) {
+          setTemplateInfo(localTemplateInfo)
+        }
+
+        // Load local data
+        console.log('📱 Loading local data...')
+        await loadSavedData()
+      } catch (error) {
+        console.error('❌ Error syncing user data:', error)
+        // Fallback to local data
+        await loadSavedData()
       }
     }
-  }, [semesters, currentSemesterIndex])
+
+    handleUserDataSync()  }, [user?.uid, isFirstLaunch])
 
   // Handle template selection
   const handleTemplateSelection = async (useDefaultTemplate: boolean, firebaseTemplate?: Template) => {
@@ -193,21 +220,41 @@ const GPACalculator = () => {
       // Mark that the app has been launched
       await markAsLaunched()
 
-      // Set the selected template
+      // Set the selected template and template info
       let selectedTemplate: Semester[]
+      let newTemplateInfo
       
       if (firebaseTemplate) {
         // Use Firebase template
         selectedTemplate = firebaseTemplate.structure.semesters
+        newTemplateInfo = {
+          name: firebaseTemplate.name,
+          isDefault: false,
+          isCustom: false,
+          templateId: firebaseTemplate.id
+        }
       } else if (useDefaultTemplate) {
         // Use default template
         selectedTemplate = [...defaultSemesters]
+        newTemplateInfo = {
+          name: 'Default Template',
+          isDefault: true,
+          isCustom: false,
+          templateId: undefined
+        }
       } else {
         // Use empty template
         selectedTemplate = [...emptyTemplate]
+        newTemplateInfo = {
+          name: 'Custom Template',
+          isDefault: false,
+          isCustom: true,
+          templateId: undefined
+        }
       }
       
       setSemesters(selectedTemplate)
+      setTemplateInfo(newTemplateInfo)
 
       // Initialize showMore array
       if (selectedTemplate.length > 0) {
@@ -224,10 +271,12 @@ const GPACalculator = () => {
       })
       fadeAnimRef.current = initialFadeAnims
 
-      // Save the selected template with user-specific key
+      // Save the selected template and template info
       if (user?.uid) {
         const semestersKey = `semesters_${user.uid}`
         await AsyncStorage.setItem(semestersKey, JSON.stringify(selectedTemplate))
+        await saveTemplateInfo(newTemplateInfo)
+          // Data saved locally - no cloud sync needed
       }
 
       // Close the modal
@@ -236,6 +285,12 @@ const GPACalculator = () => {
       console.error("Error setting template:", error)
       // Use defaults if there's an error
       setSemesters([...defaultSemesters])
+      setTemplateInfo({
+        name: 'Default Template',
+        isDefault: true,
+        isCustom: false,
+        templateId: undefined
+      })
     }
   }
 
@@ -407,7 +462,6 @@ const GPACalculator = () => {
     setEditSemesterIndex(-1)
     setEditSemesterModal(false)
   }
-
   const resetAllData = () => {
     setConfirmationModal({
       visible: true,
@@ -421,13 +475,23 @@ const GPACalculator = () => {
           // wipe user-specific storage
           if (user?.uid) {
             const semestersKey = `semesters_${user.uid}`
+            const templateInfoKey = `templateInfo_${user.uid}`
             const hasLaunchedKey = `hasLaunched_${user.uid}`
             await AsyncStorage.removeItem(semestersKey)
+            await AsyncStorage.removeItem(templateInfoKey)
             await AsyncStorage.removeItem(hasLaunchedKey)
+            
+            // Clear cloud data as well            // Cloud sync removed - only local data cleared
           }
 
           // reset app to initial state
           setSemesters([])
+          setTemplateInfo({
+            name: 'Default Template',
+            isDefault: true,
+            isCustom: false,
+            templateId: undefined
+          })
           setCurrentSemesterIndex(0)
           setIsFirstLaunch(true)
           setTemplateSelectionVisible(true)
@@ -657,9 +721,7 @@ const GPACalculator = () => {
           setEditCourseIndex(-1)
           setAddCourseModal(false)
         }}
-      />
-
-      <SettingsModal
+      />      <SettingsModal
         visible={settingsVisible}
         theme={theme}
         darkMode={darkMode}
@@ -668,8 +730,7 @@ const GPACalculator = () => {
         resetAllData={resetAllData}
         onClose={() => setSettingsVisible(false)}
         onNavigateToTemplateSubmission={() => setCurrentScreen('templateSubmission')}
-        onNavigateToAdmin={isAdmin ? () => setCurrentScreen('admin') : undefined}
-        onLogout={logout}
+        onNavigateToAdmin={isAdmin ? () => setCurrentScreen('admin') : undefined}        onLogout={logout}
         isAdmin={isAdmin}
       />
 
@@ -708,7 +769,7 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     position: "absolute",
-    top: 60,
+    top: 40,
     right: 20,
     width: 50,
     height: 50,

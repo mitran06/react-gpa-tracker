@@ -42,7 +42,7 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
     type: 'info'
   })
   
-  const { isAdmin } = useAuth()
+  const { isAdmin, cleanupUnverifiedAccount } = useAuth()
   const { error, showError, showSuccess, hideError } = useErrorHandler()
 
   // Debug admin status
@@ -116,10 +116,31 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
       }
     })
   }
-
   const viewTemplate = (template: Template) => {
     setSelectedTemplate(template)
     setModalVisible(true)
+  }
+
+  const handleAccountCleanup = async () => {
+    setConfirmationModal({
+      visible: true,
+      title: 'Cleanup Unverified Accounts',
+      message: 'This will remove accounts that haven\'t verified their email within the grace period. This action cannot be undone. Continue?',
+      confirmText: 'Cleanup',
+      type: 'warning',
+      onConfirm: async () => {
+        setConfirmationModal(prev => ({ ...prev, visible: false }))
+        try {
+          console.log('🧹 Starting manual account cleanup...')
+          await cleanupUnverifiedAccount()
+          showSuccess('Cleanup Complete', 'Account cleanup has been performed successfully.')
+          console.log('✅ Manual account cleanup completed')
+        } catch (error) {
+          console.error('❌ Error during account cleanup:', error)
+          showError('Cleanup Failed', 'Failed to perform account cleanup. Please try again.')
+        }
+      }
+    })
   }
 
   if (!isAdmin) {
@@ -259,8 +280,17 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
                   </TouchableOpacity>
                 </View>
               </View>
-            ))
-          )}
+            ))          )}
+        </View>
+
+        {/* Account Cleanup Info */}
+        <View style={[styles.emptyCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Feather name="info" size={48} color={theme.primary} />
+          <Text style={[styles.emptyTitle, { color: theme.text, fontFamily: 'Inter_500Medium' }]}>
+            Account Cleanup Active
+          </Text>          <Text style={[styles.emptySubtext, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+            Unverified email accounts are automatically deleted after 7 days to keep the system clean.
+          </Text>
         </View>
       </ScrollView>
 
@@ -563,8 +593,7 @@ const styles = StyleSheet.create({
   modalSemesterName: {
     fontSize: 14,
     marginBottom: 8,
-  },
-  modalCourse: {
+  },  modalCourse: {
     marginBottom: 2,
   },
   modalCourseName: {

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Modal, Switch, StyleSheet, Linking } from "react-native"
+import { View, Text, TouchableOpacity, Modal, Switch, StyleSheet, Linking, ScrollView } from "react-native"
 import { Feather } from "@expo/vector-icons"
 import type { Theme } from "../../types"
 
@@ -21,8 +21,7 @@ const SettingsModal = ({
   theme,
   darkMode,
   setDarkMode,
-  setInfoModalVisible,
-  resetAllData,
+  setInfoModalVisible,  resetAllData,
   onClose,
   onNavigateToTemplateSubmission,
   onNavigateToAdmin,
@@ -31,17 +30,24 @@ const SettingsModal = ({
 }: SettingsModalProps) => {
   return (
     <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.settingsContent, { backgroundColor: theme.card }]}>
-          <View style={styles.settingsHeader}>
-            <TouchableOpacity style={styles.backButton} onPress={onClose}>
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <TouchableOpacity 
+          style={[styles.settingsContent, { backgroundColor: theme.card }]}
+          activeOpacity={1}
+          onPress={() => {}}
+        >
+          <View style={styles.settingsHeader}>            <TouchableOpacity style={styles.backButton} onPress={onClose}>
               <Feather name="arrow-left" size={24} color={theme.text} />
             </TouchableOpacity>
             <Text style={[styles.settingsTitle, { color: theme.text, fontFamily: "Inter_700Bold" }]}>Settings</Text>
             <View style={{ width: 24 }} />
           </View>
 
-          <View style={styles.settingsSection}>
+          <ScrollView style={styles.settingsSection} showsVerticalScrollIndicator={false}>
             <View style={styles.settingItem}>
               <View style={styles.settingLabelContainer}>
                 <Feather name={darkMode ? "moon" : "sun"} size={20} color={theme.text} />
@@ -55,9 +61,7 @@ const SettingsModal = ({
                 trackColor={{ false: "#767577", true: "#6200EE" }}
                 thumbColor="#f4f3f4"
               />
-            </View>
-
-            <TouchableOpacity style={styles.settingItem} onPress={() => {
+            </View>            <TouchableOpacity style={styles.settingItem} onPress={() => {
               onClose()
               onNavigateToTemplateSubmission()
             }}>
@@ -137,14 +141,13 @@ const SettingsModal = ({
                   onPress={() => {
                     Linking.openURL('https://github.com/mitran06')
                   }}
-                >
-                  <Feather name="github" size={20} color={theme.background} />
+                >                  <Feather name="github" size={20} color={theme.background} />
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        </View>
-      </View>
+          </ScrollView>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   )
 }
@@ -175,8 +178,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 4,
-  },
-  settingsTitle: {
+  },  settingsTitle: {
     fontSize: 20,
     fontWeight: "bold",
   },
@@ -188,16 +190,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(150, 150, 150, 0.2)",
+    borderBottomWidth: 1,    borderBottomColor: "rgba(150, 150, 150, 0.2)",
   },
   settingLabelContainer: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
+  },
+  settingTextContainer: {
+    marginLeft: 12,
+    flex: 1,
   },
   settingLabel: {
     fontSize: 16,
     marginLeft: 12,
+  },
+  settingDescription: {
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
   },
   resetButton: {
     flexDirection: "row",
@@ -222,8 +233,7 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     fontSize: 16,
-    fontWeight: "500",
-    marginLeft: 8,
+    fontWeight: "500",    marginLeft: 8,
   },
   aboutSection: {
     marginTop: 40,
@@ -233,8 +243,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
     marginBottom: 8,
-  },
-  aboutText: {
+  },  aboutText: {
     fontSize: 14,
     marginBottom: 4,
   },

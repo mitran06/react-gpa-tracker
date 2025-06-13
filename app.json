@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#121212"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourname.gpacalculator"
@@ -25,6 +27,11 @@
     },
     "web": {
       "favicon": "./assets/small-icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3db0b934-1f98-4122-b5fd-20cba51c7e8c"
+      }
     }
   }
 }

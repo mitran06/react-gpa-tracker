@@ -20,5 +20,17 @@ service cloud.firestore {
       allow read: if request.auth != null 
         && request.auth.uid == "B0VcWqSh0wcjcj6BJv9a8PvCXRd2";
     }
+    
+    // User data collection for cloud sync
+    match /userData/{userId} {
+      // Users can only read and write their own data
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
+      
+      // Admin can read all user data (for support purposes)
+      allow read: if request.auth != null 
+        && request.auth.uid == "B0VcWqSh0wcjcj6BJv9a8PvCXRd2";
+    }
   }
 }

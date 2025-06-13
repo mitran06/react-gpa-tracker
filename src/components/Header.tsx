@@ -120,7 +120,7 @@ const Header = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    paddingTop: 60,
+    paddingTop: 40,
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
