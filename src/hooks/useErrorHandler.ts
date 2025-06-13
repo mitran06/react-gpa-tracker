@@ -195,3 +195,26 @@ export const validateTemplateDescription = (description: string): { isValid: boo
   }
   return { isValid: true }
 }
+
+// Utility function to validate course credits
+export const validateCourseCredits = (credits: string): { isValid: boolean; message?: string } => {
+  if (!credits.trim()) {
+    return { isValid: false, message: 'Credits are required' }
+  }
+  
+  const creditsValue = Number.parseFloat(credits)
+  
+  if (isNaN(creditsValue)) {
+    return { isValid: false, message: 'Credits must be a valid number' }
+  }
+  
+  if (creditsValue < 1) {
+    return { isValid: false, message: 'Credits must be at least 1' }
+  }
+  
+  if (creditsValue > 100) {
+    return { isValid: false, message: 'Credits cannot exceed 100' }
+  }
+  
+  return { isValid: true }
+}

@@ -34,7 +34,7 @@ import CommunityTemplatesScreen from "./CommunityTemplatesScreen"
 import { useTheme } from "../hooks/useTheme"
 import { useFirstLaunch } from "../hooks/useFirstLaunch"
 import { useStorage } from "../hooks/useStorage"
-import { useErrorHandler } from "../hooks/useErrorHandler"
+import { useErrorHandler, validateCourseCredits } from "../hooks/useErrorHandler"
 
 // contexts
 import { useAuth } from "../contexts/AuthContext"
@@ -310,15 +310,15 @@ const GPACalculator = () => {
       }
     })
   }
-
   const addOrEditCourse = () => {
     if (!newCourseName.trim()) {
       showError("Invalid Input", "Please enter a course name")
       return
     }
 
-    if (!newCourseCredits.trim() || isNaN(Number.parseFloat(newCourseCredits))) {
-      showError("Invalid Input", "Please enter valid credits")
+    const creditsValidation = validateCourseCredits(newCourseCredits)
+    if (!creditsValidation.isValid) {
+      showError("Invalid Credits", creditsValidation.message || "Invalid credits value")
       return
     }
 
