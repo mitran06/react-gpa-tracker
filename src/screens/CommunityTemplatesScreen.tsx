@@ -150,17 +150,15 @@ const CommunityTemplatesScreen: React.FC<CommunityTemplatesScreenProps> = ({
                 {template.description}
               </Text>
 
-              <View style={styles.templateMeta}>
-                <Text style={[styles.templateStats, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
-                  {template.structure.semesters.length} semester{template.structure.semesters.length !== 1 ? 's' : ''} • {' '}
-                  {template.structure.semesters.reduce((total, sem) => total + sem.courses.length, 0)} courses
+              <View style={styles.templateMeta}>                <Text style={[styles.templateStats, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+                  {`${template.structure.semesters.length} semester${template.structure.semesters.length !== 1 ? 's' : ''} • ${template.structure.semesters.reduce((total, sem) => total + sem.courses.length, 0)} courses`}
                 </Text>
                 <Text style={[styles.templateDate, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
                   {new Date(template.createdAt).toLocaleDateString()}
                 </Text>
-              </View>
-            </TouchableOpacity>
-          ))        )}
+              </View>            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
 
       <ErrorModal

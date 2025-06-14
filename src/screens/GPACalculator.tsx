@@ -1,19 +1,14 @@
-// main calculator screen
 import { useState, useEffect, useRef, useCallback } from "react"
 import { ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Animated, StatusBar } from "react-native"
 import { Feather } from "@expo/vector-icons"
-import * as SplashScreen from "expo-splash-screen"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter"
 
-// ui components
 import Header from "../components/Header"
 import CourseCard from "../components/CourseCard"
 import GPADisplay from "../components/GPADisplay"
 import EmptySemester from "../components/EmptySemester"
 import AddCourseButton from "../components/AddCourseButton"
 
-// all modals
 import TemplateSelectionModal from "../components/modals/TemplateSelectionModal"
 import AddSemesterModal from "../components/modals/AddSemesterModal"
 import EditSemesterModal from "../components/modals/EditSemesterModal"
@@ -23,68 +18,45 @@ import InfoModal from "../components/modals/InfoModal"
 import ErrorModal from "../components/modals/ErrorModal"
 import ConfirmationModal from "../components/modals/ConfirmationModal"
 
-// screens
 import LoginScreen from "./LoginScreen"
 import EmailVerificationScreen from "./EmailVerificationScreen"
 import TemplateSubmissionScreen from "./TemplateSubmissionScreen"
 import AdminScreen from "./AdminScreen"
 import CommunityTemplatesScreen from "./CommunityTemplatesScreen"
 
-// custom hooks
 import { useTheme } from "../hooks/useTheme"
 import { useFirstLaunch } from "../hooks/useFirstLaunch"
 import { useStorage } from "../hooks/useStorage"
 import { useErrorHandler, validateCourseCredits } from "../hooks/useErrorHandler"
-
-// contexts
 import { useAuth } from "../contexts/AuthContext"
-
-// calculation utilities
 import { calculateGPA, calculateCumulativeGPA, animateGPAValue } from "../utils/calculations"
-
-// templates
 import { defaultSemesters, emptyTemplate } from "../constants/templates"
-
-// types
 import { Template, Semester, Course } from "../types"
 
-const GPACalculator = () => {
-  // font loading
-  const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_700Bold,
-  })  // authentication
-  const { user, loading: authLoading, logout, isAdmin } = useAuth()
+const GPACalculator = () => {  const { user, loading: authLoading, logout, isAdmin } = useAuth()
 
-  // first launch detection and template selection
   const {
     isFirstLaunch,
     setIsFirstLaunch,
     templateSelectionVisible,
     setTemplateSelectionVisible,
     appIsReady,
-    setAppIsReady, // added setAppIsReady from useFirstLaunch hook
+    setAppIsReady,
     markAsLaunched,
     checkFirstLaunch,
   } = useFirstLaunch(user?.uid)
 
-  // theme stuff
   const { darkMode, setDarkMode, theme } = useTheme()
-  // async storage handling
   const { semesters, setSemesters, loadSavedData, saveTemplateInfo, loadTemplateInfo } = useStorage(isFirstLaunch, user?.uid)
 
-  // template info state for cloud sync
   const [templateInfo, setTemplateInfo] = useState({
-    name: 'Default Template',    isDefault: true,
+    name: 'Default Template',
+    isDefault: true,
     isCustom: false,
     templateId: undefined as string | undefined
   })
 
-  // screen navigation state
   const [currentScreen, setCurrentScreen] = useState<'calculator' | 'templateSubmission' | 'admin' | 'communityTemplates'>('calculator')
-
-  // state variables
   const [currentSemesterIndex, setCurrentSemesterIndex] = useState(0)
   const [showMore, setShowMore] = useState<boolean[]>([])
   const [scaleAnim] = useState(new Animated.Value(0.95))
@@ -102,7 +74,6 @@ const GPACalculator = () => {
   const [displaySemesterGPA, setDisplaySemesterGPA] = useState("0.00")
   const [displayCumulativeGPA, setDisplayCumulativeGPA] = useState("0.00")
 
-  // error handling
   const { error, showError, showSuccess, hideError } = useErrorHandler()
   const [confirmationModal, setConfirmationModal] = useState({
     visible: false,
@@ -114,20 +85,14 @@ const GPACalculator = () => {
     onConfirm: () => {}
   })
 
-  // ref to store fadeAnim values for each course
   const fadeAnimRef = useRef<Record<string, Animated.Value>>({})
-
-  // animation refs
   const addButtonScale = new Animated.Value(1)
   const headerOpacity = new Animated.Value(1)
   const semesterScrollX = new Animated.Value(0)
-
-  // handle app loading and font loading
+  // handle app initialization
   useEffect(() => {
     async function prepare() {
       try {
-        // keep splash screen visible while checking first launch
-        await SplashScreen.preventAutoHideAsync()
         await checkFirstLaunch()
       } catch (e) {
         console.warn(e)
@@ -137,13 +102,7 @@ const GPACalculator = () => {
     }
 
     prepare()
-  }, [])
-
-  const onLayoutRootView = useCallback(async () => {
-    if (appIsReady && fontsLoaded) {
-      await SplashScreen.hideAsync()
-    }
-  }, [appIsReady, fontsLoaded])
+  }, [])  // No need for onLayoutRootView since splash screen is handled in App.tsx
 
   // helper to get fadeAnim for a specific course
   const getFadeAnim = (semesterIndex: number, courseIndex: number) => {
@@ -526,9 +485,8 @@ const GPACalculator = () => {
       useNativeDriver: true,
     }).start()
   }
-
-  // wait for fonts and auth loading before rendering
-  if (!fontsLoaded || authLoading) {
+  // wait for auth loading before rendering
+  if (authLoading) {
     return null
   }
 
@@ -597,9 +555,8 @@ const GPACalculator = () => {
       />
     )
   }
-
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} onLayout={onLayoutRootView}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} />
 
       {/* Header */}
@@ -728,9 +685,9 @@ const GPACalculator = () => {
         setDarkMode={setDarkMode}
         setInfoModalVisible={setInfoModalVisible}
         resetAllData={resetAllData}
-        onClose={() => setSettingsVisible(false)}
-        onNavigateToTemplateSubmission={() => setCurrentScreen('templateSubmission')}
-        onNavigateToAdmin={isAdmin ? () => setCurrentScreen('admin') : undefined}        onLogout={logout}
+        onClose={() => setSettingsVisible(false)}        onNavigateToTemplateSubmission={() => setCurrentScreen('templateSubmission')}
+        onNavigateToAdmin={isAdmin ? () => setCurrentScreen('admin') : undefined}
+        onLogout={logout}
         isAdmin={isAdmin}
       />
 

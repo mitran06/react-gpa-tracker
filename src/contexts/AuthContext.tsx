@@ -121,14 +121,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     loadLastLoginTime()
   }, [])
-
   useEffect(() => {
     // Initialize auth state listener
     const initializeAuth = async () => {
       try {
         if (!auth) {
           throw new Error('Firebase Auth not available')
-        }        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        }
+        
+        // Add a loading timeout to prevent infinite loading
+        const loadingTimeout = setTimeout(() => {
+          console.log('⚠️ Auth loading timeout - setting loading to false')
+          setLoading(false)
+        }, 10000) // 10 second timeout
+        
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+          clearTimeout(loadingTimeout) // Clear timeout when auth state changes
+          
           if (firebaseUser) {
             // Debug: Log current user info
             console.log('🔑 Current User Info:', {

@@ -44,8 +44,7 @@ const InfoModal = ({ visible, theme, onClose }: InfoModalProps) => {
               Tips:
             </Text>
             <Text style={[styles.infoModalText, { color: theme.subtext, fontFamily: "Inter_400Regular" }]}>
-              • Long press on a semester tab to edit its name{"\n"}• Add multiple semesters to track your progress
-              {"\n"}• Your data is automatically saved
+              {`• Long press on a semester tab to edit its name\n• Add multiple semesters to track your progress\n• Your data is automatically saved`}
             </Text>
           </ScrollView>
           <TouchableOpacity style={[styles.infoModalButton, { backgroundColor: theme.primary }]} onPress={onClose}>

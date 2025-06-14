@@ -32,15 +32,15 @@ const SettingsModal = ({
     <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity 
         style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
+        activeOpacity={1}        onPress={onClose}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.settingsContent, { backgroundColor: theme.card }]}
           activeOpacity={1}
           onPress={() => {}}
         >
-          <View style={styles.settingsHeader}>            <TouchableOpacity style={styles.backButton} onPress={onClose}>
+          <View style={styles.settingsHeader}>
+            <TouchableOpacity style={styles.backButton} onPress={onClose}>
               <Feather name="arrow-left" size={24} color={theme.text} />
             </TouchableOpacity>
             <Text style={[styles.settingsTitle, { color: theme.text, fontFamily: "Inter_700Bold" }]}>Settings</Text>
@@ -61,7 +61,9 @@ const SettingsModal = ({
                 trackColor={{ false: "#767577", true: "#6200EE" }}
                 thumbColor="#f4f3f4"
               />
-            </View>            <TouchableOpacity style={styles.settingItem} onPress={() => {
+            </View>
+            
+            <TouchableOpacity style={styles.settingItem} onPress={() => {
               onClose()
               onNavigateToTemplateSubmission()
             }}>

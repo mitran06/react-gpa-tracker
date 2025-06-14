@@ -214,9 +214,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
                     {isLogin ? 'Sign In' : 'Create Account'}
                   </Text>
                 )}
-              </TouchableOpacity>
-
-              {/* Toggle Mode */}
+              </TouchableOpacity>              {/* Toggle Mode */}
               <TouchableOpacity onPress={toggleMode} style={styles.toggleButton}>
                 <Text style={[styles.toggleText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
                   {isLogin ? "Don't have an account? " : "Already have an account? "}
@@ -226,8 +224,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ theme }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>        </ScrollView>
-      </KeyboardAvoidingView>      {/* Custom Error Modal */}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Custom Error Modal */}
       <ErrorModal
         visible={error.visible}
         title={error.title}

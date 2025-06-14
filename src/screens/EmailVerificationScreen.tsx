@@ -122,9 +122,10 @@ const EmailVerificationScreen: React.FC<EmailVerificationScreenProps> = ({ theme
               Verification email sent to:
             </Text>
             <Text style={[styles.email, { color: theme.text, fontFamily: 'Inter_600SemiBold' }]}>
-              {user?.email}
-            </Text>
-          </View>          <Text style={[styles.instruction, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+              {user?.email}            </Text>
+          </View>
+          
+          <Text style={[styles.instruction, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
             Please check your inbox (and spam folder) and click the link to verify your account.
           </Text>
 

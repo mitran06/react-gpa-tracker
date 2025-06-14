@@ -1,7 +1,6 @@
 // hook for detecting first app launch
 import { useState, useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import * as SplashScreen from "expo-splash-screen"
 
 export const useFirstLaunch = (userUid?: string) => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(false)
@@ -11,9 +10,6 @@ export const useFirstLaunch = (userUid?: string) => {
   // check if this is the first launch for the current user
   const checkFirstLaunch = async () => {
     try {
-      // keep splash screen visible during check
-      await SplashScreen.preventAutoHideAsync()
-      
       if (!userUid) {
         // No user authenticated yet
         setAppIsReady(true)

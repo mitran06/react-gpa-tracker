@@ -2,12 +2,12 @@
   "expo": {
     "name": "GPA Calculator",
     "slug": "gpa-calculator",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
-    "icon": "./assets/small-icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/small-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#121212"
     },
@@ -16,17 +16,17 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.gpacalculator"
+      "bundleIdentifier": "com.mitran.gpacalculator"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/small-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#121212"
       },
-      "package": "com.yourname.gpacalculator"
+      "package": "com.mitran.gpacalculator"
     },
     "web": {
-      "favicon": "./assets/small-icon.png"
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {

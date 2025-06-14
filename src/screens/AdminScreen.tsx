@@ -22,7 +22,8 @@ interface AdminScreenProps {
   onBack: () => void
 }
 
-const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const [pendingTemplates, setPendingTemplates] = useState<Template[]>([])
+const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {
+  const [pendingTemplates, setPendingTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
@@ -248,10 +249,8 @@ const AdminScreen: React.FC<AdminScreenProps> = ({ theme, onBack }) => {  const 
                   {template.description}
                 </Text>
 
-                <View style={styles.templateMeta}>
-                  <Text style={[styles.templateStats, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
-                    {template.structure.semesters.length} semester{template.structure.semesters.length !== 1 ? 's' : ''} • {' '}
-                    {template.structure.semesters.reduce((total, sem) => total + sem.courses.length, 0)} courses
+                <View style={styles.templateMeta}>                  <Text style={[styles.templateStats, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+                    {`${template.structure.semesters.length} semester${template.structure.semesters.length !== 1 ? 's' : ''} • ${template.structure.semesters.reduce((total, sem) => total + sem.courses.length, 0)} courses`}
                   </Text>
                   <Text style={[styles.templateDate, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
                     {new Date(template.createdAt).toLocaleDateString()}

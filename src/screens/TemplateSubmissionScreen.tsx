@@ -143,9 +143,8 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                 <Text style={[styles.previewTitle, { color: theme.text, fontFamily: 'Inter_600SemiBold' }]}>
                   Template Preview
                 </Text>
-              </View>
-              <Text style={[styles.previewText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
-                {currentSemesters.length} semester{currentSemesters.length !== 1 ? 's' : ''} • {totalCourses} course{totalCourses !== 1 ? 's' : ''}
+              </View>              <Text style={[styles.previewText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+                {`${currentSemesters.length} semester${currentSemesters.length !== 1 ? 's' : ''} • ${totalCourses} course${totalCourses !== 1 ? 's' : ''}`}
               </Text>
               {currentSemesters.map((semester, index) => (
                 <View key={index} style={styles.semesterPreview}>
@@ -209,12 +208,8 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                 <View style={styles.infoTextContainer}>
                   <Text style={[styles.infoTitle, { color: theme.text, fontFamily: 'Inter_500Medium' }]}>
                     Submission Guidelines
-                  </Text>
-                  <Text style={[styles.infoText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
-                    • Your template will be reviewed before approval{'\n'}
-                    • Make sure courses and credits are accurate{'\n'}
-                    • Templates should be useful for other students{'\n'}
-                    • Your grades will be cleared from submitted templates
+                  </Text>                  <Text style={[styles.infoText, { color: theme.subtext, fontFamily: 'Inter_400Regular' }]}>
+                    {`• Your template will be reviewed before approval\n• Make sure courses and credits are accurate\n• Templates should be useful for other students\n• Your grades will be cleared from submitted templates`}
                   </Text>
                 </View>
               </View>
@@ -245,9 +240,9 @@ const TemplateSubmissionScreen: React.FC<TemplateSubmissionScreenProps> = ({
                     </Text>
                   </View>
                 )}
-              </TouchableOpacity>
-            </View>
-          </View>        </ScrollView>
+              </TouchableOpacity>            </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Custom Error Modal */}
