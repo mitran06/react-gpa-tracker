@@ -1,28 +1,45 @@
 # dependencies
-/node_modules
-
-# Expo
-.expo/
-dist/
-/android
-/ios
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# debug
+node_modules/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native builds (for standalone apps)
+android/
+ios/
+
+# Environment variables (may contain sensitive info)
 .env*
 
-# typescript
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tgz
+*.tar.gz
+build/
+
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase
+# firebaseConfig.js
+
+# Temporary files
+*.tmp
+.temp/

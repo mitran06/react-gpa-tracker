@@ -31,10 +31,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Admin UID - hardcoded for security
-const ADMIN_UID = 'B0VcWqSh0wcjcj6BJv9a8PvCXRd2' // mitran.gokul06@gmail.com
+// admin UID - replace with your actual admin user UID
+const ADMIN_UID = 'your-admin-uid-here' // replace with your admin user's UID
 
-console.log('🔧 Admin UID configured as:', ADMIN_UID)
+console.log('admin UID configured as:', ADMIN_UID)
 
 // Time limits for unverified accounts (in milliseconds)
 const UNVERIFIED_ACCOUNT_TIMEOUT = 24 * 60 * 60 * 1000 // 24 hours

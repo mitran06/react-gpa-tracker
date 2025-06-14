@@ -1,4 +1,11 @@
 {
+  "name": "gpa-calculator",
+  "version": "1.0.0",
+  "description": "A React Native GPA calculator app with Firebase authentication and template sharing",
+  "main": "App.tsx",
+  "keywords": ["react-native", "expo", "gpa", "calculator", "education"],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo/metro-runtime": "~5.0.4",
@@ -36,7 +43,5 @@
         "listUnknownPackages": false
       }
     }
-  },
-  "name": "gpa_calculator",
-  "version": "1.0.0"
+  }
 }

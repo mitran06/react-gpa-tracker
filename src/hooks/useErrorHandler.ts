@@ -1,3 +1,4 @@
+// hook for managing error states and validation
 import { useState } from 'react'
 
 export interface ErrorState {

@@ -3,12 +3,14 @@ import { ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Animated, Statu
 import { Feather } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
+// components
 import Header from "../components/Header"
 import CourseCard from "../components/CourseCard"
 import GPADisplay from "../components/GPADisplay"
 import EmptySemester from "../components/EmptySemester"
 import AddCourseButton from "../components/AddCourseButton"
 
+// modals
 import TemplateSelectionModal from "../components/modals/TemplateSelectionModal"
 import AddSemesterModal from "../components/modals/AddSemesterModal"
 import EditSemesterModal from "../components/modals/EditSemesterModal"
@@ -18,12 +20,14 @@ import InfoModal from "../components/modals/InfoModal"
 import ErrorModal from "../components/modals/ErrorModal"
 import ConfirmationModal from "../components/modals/ConfirmationModal"
 
+// other screens
 import LoginScreen from "./LoginScreen"
 import EmailVerificationScreen from "./EmailVerificationScreen"
 import TemplateSubmissionScreen from "./TemplateSubmissionScreen"
 import AdminScreen from "./AdminScreen"
 import CommunityTemplatesScreen from "./CommunityTemplatesScreen"
 
+// hooks and utilities
 import { useTheme } from "../hooks/useTheme"
 import { useFirstLaunch } from "../hooks/useFirstLaunch"
 import { useStorage } from "../hooks/useStorage"
@@ -33,8 +37,11 @@ import { calculateGPA, calculateCumulativeGPA, animateGPAValue } from "../utils/
 import { defaultSemesters, emptyTemplate } from "../constants/templates"
 import { Template, Semester, Course } from "../types"
 
-const GPACalculator = () => {  const { user, loading: authLoading, logout, isAdmin } = useAuth()
+const GPACalculator = () => {
+  // authentication state
+  const { user, loading: authLoading, logout, isAdmin } = useAuth()
 
+  // first launch handling
   const {
     isFirstLaunch,
     setIsFirstLaunch,
@@ -46,6 +53,7 @@ const GPACalculator = () => {  const { user, loading: authLoading, logout, isAdm
     checkFirstLaunch,
   } = useFirstLaunch(user?.uid)
 
+  // theme and storage
   const { darkMode, setDarkMode, theme } = useTheme()
   const { semesters, setSemesters, loadSavedData, saveTemplateInfo, loadTemplateInfo } = useStorage(isFirstLaunch, user?.uid)
 
